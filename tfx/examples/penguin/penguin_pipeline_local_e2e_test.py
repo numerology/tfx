@@ -18,6 +18,8 @@ from typing import Text
 import unittest
 
 from absl import logging
+from absl.testing import parameterized
+
 import tensorflow as tf
 
 from tfx.dsl.io import fileio
@@ -26,9 +28,17 @@ from tfx.orchestration import metadata
 from tfx.orchestration.local.local_dag_runner import LocalDagRunner
 
 
+# Detect if flax is installed.
+try:
+  import flax  # pylint: disable=g-import-not-at-top
+except ImportError:
+  flax = None
+
+
 @unittest.skipIf(tf.__version__ < '2',
                  'Uses keras Model only compatible with TF 2.x')
-class PenguinPipelineLocalEndToEndTest(tf.test.TestCase):
+class PenguinPipelineLocalEndToEndTest(tf.test.TestCase,
+                                       parameterized.TestCase):
 
   def setUp(self):
     super(PenguinPipelineLocalEndToEndTest, self).setUp()
@@ -40,13 +50,19 @@ class PenguinPipelineLocalEndToEndTest(tf.test.TestCase):
     self._pipeline_name = 'penguin_test'
     self._data_root = os.path.join(os.path.dirname(__file__), 'data')
 
-    self._module_file = os.path.join(
-        os.path.dirname(__file__), 'penguin_utils.py')
     self._serving_model_dir = os.path.join(self._test_dir, 'serving_model')
     self._pipeline_root = os.path.join(self._test_dir, 'tfx', 'pipelines',
                                        self._pipeline_name)
     self._metadata_path = os.path.join(self._test_dir, 'tfx', 'metadata',
                                        self._pipeline_name, 'metadata.db')
+
+  def module_file_name(self, model_framework='keras'):
+    return os.path.join(
+        os.path.dirname(__file__), f'penguin_utils_{model_framework}.py')
+
+  def skip_if_flax_missing(self, model_framework):
+    if model_framework == 'flax_experimental' and flax is None:
+      raise unittest.SkipTest('Flax is not installed')
 
   def assertExecutedOnce(self, component: Text) -> None:
     """Check the component is executed exactly once."""
@@ -69,11 +85,16 @@ class PenguinPipelineLocalEndToEndTest(tf.test.TestCase):
     if has_tuner:
       self.assertExecutedOnce('Tuner')
 
-  def testPenguinPipelineLocal(self):
+  @parameterized.parameters(
+      ('keras',),
+      ('flax_experimental',))
+  def testPenguinPipelineLocal(self, model_framework='keras'):
+    self.skip_if_flax_missing(model_framework)
+    module_file = self.module_file_name(model_framework)
     pipeline = penguin_pipeline_local._create_pipeline(
         pipeline_name=self._pipeline_name,
         data_root=self._data_root,
-        module_file=self._module_file,
+        module_file=module_file,
         serving_model_dir=self._serving_model_dir,
         pipeline_root=self._pipeline_root,
         metadata_path=self._metadata_path,
@@ -102,10 +123,9 @@ class PenguinPipelineLocalEndToEndTest(tf.test.TestCase):
 
     with metadata.Metadata(metadata_config) as m:
       # Artifact count is increased by 3 caused by Evaluator and Pusher.
-      self.assertEqual(artifact_count + 3, len(m.store.get_artifacts()))
+      self.assertLen(m.store.get_artifacts(), artifact_count + 3)
       artifact_count = len(m.store.get_artifacts())
-      self.assertEqual(expected_execution_count * 2,
-                       len(m.store.get_executions()))
+      self.assertLen(m.store.get_executions(), expected_execution_count * 2)
 
     logging.info('Starting the third pipeline run. '
                  'All components will use cached results.')
@@ -114,16 +134,16 @@ class PenguinPipelineLocalEndToEndTest(tf.test.TestCase):
     # Asserts cache execution.
     with metadata.Metadata(metadata_config) as m:
       # Artifact count is unchanged.
-      self.assertEqual(artifact_count, len(m.store.get_artifacts()))
-      self.assertEqual(expected_execution_count * 3,
-                       len(m.store.get_executions()))
+      self.assertLen(m.store.get_artifacts(), artifact_count)
+      self.assertLen(m.store.get_executions(), expected_execution_count * 3)
 
   def testPenguinPipelineLocalWithTuner(self):
+    module_file = self.module_file_name('keras')
     LocalDagRunner().run(
         penguin_pipeline_local._create_pipeline(
             pipeline_name=self._pipeline_name,
             data_root=self._data_root,
-            module_file=self._module_file,
+            module_file=module_file,
             serving_model_dir=self._serving_model_dir,
             pipeline_root=self._pipeline_root,
             metadata_path=self._metadata_path,
