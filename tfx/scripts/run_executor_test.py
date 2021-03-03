@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for tfx.scripts.run_executor."""
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import json
 from typing import Any, Dict, List, Text
@@ -68,7 +73,7 @@ class RunExecutorTest(tf.test.TestCase):
         '--exec-properties=%s' % json.dumps(exec_properties),
     ]
     with ArgsCapture() as args_capture:
-      run_executor.main(run_executor._parse_flags(args))
+      run_executor.main(args)
       # TODO(b/131417512): Add equal comparison to types.Artifact class so we
       # can use asserters.
       self.assertSetEqual(
