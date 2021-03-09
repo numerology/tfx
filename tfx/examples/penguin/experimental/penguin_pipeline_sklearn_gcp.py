@@ -51,10 +51,6 @@ _project_id = 'PROJECT_ID'
 # Directory and data locations (uses Google Cloud Storage).
 _bucket = 'gs://BUCKET'
 
-# Custom container image in Google Container Registry (GCR) to use for training
-# on Google Cloud AI Platform.
-_tfx_image = f'gcr.io/{_project_id}/tfx-example-sklearn'
-
 # Region to use for Dataflow jobs and AI Platform jobs.
 #   Dataflow: https://cloud.google.com/dataflow/docs/concepts/regional-endpoints
 #   AI Platform: https://cloud.google.com/ml-engine/docs/tensorflow/regions
@@ -67,11 +63,6 @@ _gcp_region = 'us-central1'
 _ai_platform_training_args = {
     'project': _project_id,
     'region': _gcp_region,
-    # Override the default TFX image used for training with one with the correct
-    # scikit-learn version.
-    'masterConfig': {
-        'imageUri': _tfx_image,
-    },
 }
 
 # A dict which contains the serving job parameters to be passed to Google
@@ -86,9 +77,7 @@ _ai_platform_serving_args = {
     # Note that serving currently only supports a single region:
     # https://cloud.google.com/ml-engine/reference/rest/v1/projects.models#Model
     'regions': [_gcp_region],
-    # TODO(b/157646655): Update the version once sklearn support is added back
-    # to CAIP in the next runtime release.
-    'runtime_version': '1.15',
+    'runtime_version': '2.3',
 }
 
 # This example assumes that Penguin data is stored in ~/penguin/data and the
@@ -158,7 +147,6 @@ def _create_pipeline(pipeline_name: Text, pipeline_root: Text, data_root: Text,
   # Uses user-provided Python function that trains a model using TF-Learn.
   # Num_steps is not provided during evaluation because the scikit-learn model
   # loads and evaluates the entire test set at once.
-  # TODO(b/159470716): Make schema optional in Trainer.
   trainer = Trainer(
       module_file=trainer_module_file,
       custom_executor_spec=executor_spec.ExecutorClassSpec(
