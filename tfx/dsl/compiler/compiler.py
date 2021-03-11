@@ -103,7 +103,9 @@ class Compiler(object):
                   tfx_node.id, property_name, type(property_value)))
 
   def _compile_node(
-      self, tfx_node: base_node.BaseNode, compile_context: _CompilerContext,
+      self,
+      tfx_node: base_node.BaseNode,
+      compile_context: _CompilerContext,
       deployment_config: pipeline_pb2.IntermediateDeploymentConfig,
       enable_cache: bool,
   ) -> pipeline_pb2.PipelineNode:
@@ -150,8 +152,8 @@ class Compiler(object):
 
     # Pre Step 3: Alter graph topology if needed.
     if compile_context.is_async_mode:
-      tfx_node_inputs = self._compile_resolver_config(
-          compile_context, tfx_node, node)
+      tfx_node_inputs = self._compile_resolver_config(compile_context, tfx_node,
+                                                      node)
     else:
       tfx_node_inputs = tfx_node.inputs
 
@@ -410,8 +412,7 @@ class Compiler(object):
           input_channels[parent_input_key] = channel
       # Step 3.
       # Convert resolver node into corresponding resolver steps.
-      resolver_steps.extend(
-          reversed(_convert_to_resolver_steps(resolver_node)))
+      resolver_steps.extend(reversed(_convert_to_resolver_steps(resolver_node)))
 
     if resolver_steps:
       node.inputs.resolver_config.resolver_steps.extend(
@@ -435,6 +436,15 @@ class Compiler(object):
           visit_queue.append(upstream_node)
     return result
 
+  def _validate_pipeline(self, tfx_pipeline: pipeline.Pipeline):
+    """Performs pre-compile validations."""
+    if (tfx_pipeline.execution_mode == pipeline.ExecutionMode.ASYNC and
+        compiler_utils.has_task_dependency(tfx_pipeline)):
+      raise ValueError("Task dependency is not supported in ASYNC mode.")
+
+    if not compiler_utils.ensure_topological_order(tfx_pipeline.components):
+      raise ValueError("Pipeline components are not topologically sorted.")
+
   def compile(self, tfx_pipeline: pipeline.Pipeline) -> pipeline_pb2.Pipeline:
     """Compiles a tfx pipeline into uDSL proto.
 
@@ -444,6 +454,7 @@ class Compiler(object):
     Returns:
       A Pipeline proto that encodes all necessary information of the pipeline.
     """
+    self._validate_pipeline(tfx_pipeline)
     context = _CompilerContext.from_tfx_pipeline(tfx_pipeline)
     pipeline_pb = pipeline_pb2.Pipeline()
     pipeline_pb.pipeline_info.id = context.pipeline_info.pipeline_name
@@ -457,8 +468,6 @@ class Compiler(object):
           pipeline_pb.runtime_spec.pipeline_run_id.runtime_parameter,
           constants.PIPELINE_RUN_ID_PARAMETER_NAME, str)
 
-    assert compiler_utils.ensure_topological_order(tfx_pipeline.components), (
-        "Pipeline components are not topologically sorted.")
     deployment_config = pipeline_pb2.IntermediateDeploymentConfig()
     if tfx_pipeline.metadata_connection_config:
       deployment_config.metadata_connection_config.Pack(

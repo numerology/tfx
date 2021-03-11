@@ -109,3 +109,14 @@ def ensure_topological_order(nodes: List[base_node.BaseNode]) -> bool:
         return False
     visited.add(node)
   return True
+
+
+def has_task_dependency(tfx_pipeline: pipeline.Pipeline):
+  for component in tfx_pipeline.components:
+    upstream_data_dep_ids = {
+        c.producer_component_id for c in component.inputs.values()
+    }
+    upstream_deps_ids = {node.id for node in component._upstream_nodes}  # pylint: disable=protected-access
+    if upstream_data_dep_ids != upstream_deps_ids:
+      return True
+  return False
