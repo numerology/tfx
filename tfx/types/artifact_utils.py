@@ -35,6 +35,10 @@ from ml_metadata.proto import metadata_store_pb2
 
 ARTIFACT_TFX_VERSION_CUSTOM_PROPERTY_KEY = 'tfx_version'
 
+# TODO(b/182526033): deprecate old artifact payload format.
+# Version that "Format-TFMA/Format-Serving" is introduced.
+_ARTIFACT_VERSION_FOR_MODEL_UPDATE = '0.29.0.dev'
+
 
 # TODO(ruoyu): Deprecate this function since it is no longer needed.
 def parse_artifact_dict(json_str: Text) -> Dict[Text, List[Artifact]]:
