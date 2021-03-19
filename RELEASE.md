@@ -25,6 +25,9 @@
 *   Deprecated input/output compatibility aliases for Transform and
     StatisticsGen.
 
+*   Change ExampleStatistics artifact payload from tfrecord stats_tfrecord
+    file to binary proto FeatureStats.pb file.
+
 ## Bug Fixes and Other Changes
 
 *   The `tfx_version` custom property of output artifacts is now set by the

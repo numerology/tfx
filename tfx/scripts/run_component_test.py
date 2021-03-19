@@ -56,9 +56,10 @@ class RunComponentTest(absltest.TestCase):
 
     # Check the statistics_gen outputs
     self.assertTrue(
-        fileio.exists(os.path.join(output_data_dir, 'train', 'stats_tfrecord')))
+        fileio.exists(
+            os.path.join(output_data_dir, 'train', 'FeatureStats.pb')))
     self.assertTrue(
-        fileio.exists(os.path.join(output_data_dir, 'eval', 'stats_tfrecord')))
+        fileio.exists(os.path.join(output_data_dir, 'eval', 'FeatureStats.pb')))
     self.assertTrue(os.path.exists(statistics_split_names_path))
     self.assertEqual(
         pathlib.Path(statistics_split_names_path).read_text(),
