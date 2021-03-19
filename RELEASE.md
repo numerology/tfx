@@ -9,6 +9,10 @@
    (both enabled by default).
 *  Added an accessor (`.data_view_decode_fn`) to the decoder function wrapped in
    the DataView in Trainer `FnArgs.data_accessor`.
+*  Support is added for the JSON_VALUE artifact property type, allowing storage
+   of JSON-compatible objects as artifact metadata.
+*  Support is added for the KFP v2 artifact metadata field when executing using
+   the KFP v2 container entrypoint.
 
 ## Breaking Changes
 
