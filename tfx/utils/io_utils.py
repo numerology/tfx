@@ -104,6 +104,14 @@ def write_string_file(file_name: Text, string_value: Text) -> None:
     f.write(string_value)
 
 
+def write_bytes_file(file_name: Text, content: bytes) -> None:
+  """Writes bytes to file."""
+
+  fileio.makedirs(os.path.dirname(file_name))
+  with fileio.open(file_name, 'wb') as f:
+    f.write(content)
+
+
 def write_pbtxt_file(file_name: Text, proto: Message) -> None:
   """Writes a text protobuf to file."""
 
@@ -181,6 +189,17 @@ def read_string_file(file_name: Text) -> Text:
     else:
       raise FileNotFoundError(msg)  # pylint: disable=undefined-variable
   return fileio.open(file_name).read()
+
+
+def read_bytes_file(file_name: Text) -> bytes:
+  """Reads bytes from a file."""
+  if not fileio.exists(file_name):
+    msg = '{} does not exist'.format(file_name)
+    if six.PY2:
+      raise OSError(msg)
+    else:
+      raise FileNotFoundError(msg)  # pylint: disable=undefined-variable
+  return fileio.open(file_name, 'rb').read()
 
 
 class SchemaReader(object):
