@@ -96,7 +96,7 @@ def ignore_test_objects(path, parent, children):
 def main(_):
 
   do_not_generate_docs_for = []
-  for name in ["utils", "proto", "dependencies", "version", "examples"]:
+  for name in ["utils", "dependencies", "version", "examples"]:
     submodule = getattr(tfx, name, None)
     if submodule is not None:
       do_not_generate_docs_for.append(submodule)
