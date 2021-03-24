@@ -38,6 +38,7 @@
 *   Upgraded example Apache Flink deployment to Flink 1.12.1.
 *   Upgraded example Apache Spark deployment to Spark 2.4.7.
 *   Added the "TFX Python function component" notebook tutorial.
+*   Added the "TFX container component" notebook tutorial.
 
 # Version 0.28.0
 
